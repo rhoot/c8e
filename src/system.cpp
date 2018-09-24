@@ -157,10 +157,12 @@ namespace c8e
             case 0xE000:
                 switch (sys->op & 0x00FF)
                 {
-                    case 0x00A1: // Skips the next instruction if the key stored in VX isn't pressed.
+                    case 0x00A1: // 0xEXA1 : Skips the next instruction if the key stored in VX isn't pressed.
                     {
-                        printf("IMPLEMENT: 0xEXA1\n");
-                        sys->pc += 2;
+                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
+                        const uint8_t key = sys->V[reg];
+                        const uint16_t mask = 1 << key;
+                        sys->pc += (sys->buttons & mask ? 0 : 2);
                         break;
                     }
 
