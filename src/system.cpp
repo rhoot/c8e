@@ -334,7 +334,7 @@ namespace c8e
             {
                 if (--sys->soundTimer == 0)
                 {
-                    printf("Beep!\n");
+                    putc('\a', stdout);
                 }
             }
 
