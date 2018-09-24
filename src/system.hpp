@@ -14,6 +14,7 @@ namespace c8e
 
         uint8_t  delayTimer;
         uint8_t  soundTimer;
+        struct timespec nextTick;
 
         uint16_t stack[16];
         int8_t   sp;

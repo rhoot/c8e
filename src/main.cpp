@@ -38,6 +38,8 @@ static const uint8_t PONG2_C8[294] = {
 
 int main(int, char**)
 {
+    srand(time(nullptr));
+
     c8e::System sys;
     c8e::systemInit(&sys);
     c8e::systemLoad(&sys, PONG2_C8, sizeof(PONG2_C8));
@@ -68,9 +70,11 @@ int main(int, char**)
             sys.drawFlag = false;
         }
 
+        constexpr int32_t CYCLE_HZ = 540;
+
         struct timespec ts;
         ts.tv_sec = 0;
-        ts.tv_nsec = 1000000000 / 60;
+        ts.tv_nsec = 1000000000 / CYCLE_HZ;
         nanosleep(&ts, nullptr);
     }
 }

@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include <time.h>
+
 #include "system.hpp"
 
 namespace c8e
@@ -263,11 +265,48 @@ namespace c8e
         assert(!"unknown op code");
     }
 
+    static constexpr int64_t NS_PER_SEC           = 1000000000;
+    static constexpr int64_t TIMER_UPDATE_NS_FREQ = NS_PER_SEC / 60;
+
+    static void timeAdd(struct timespec* ts, int64_t nsec)
+    {
+        ts->tv_sec  += (nsec / NS_PER_SEC);
+        ts->tv_nsec += (nsec % NS_PER_SEC);
+
+        if (ts->tv_nsec > NS_PER_SEC)
+        {
+            ts->tv_sec  += 1;
+            ts->tv_nsec -= NS_PER_SEC;
+        }
+    }
+
+    static int32_t timeCmp(struct timespec* a, struct timespec* b)
+    {
+        if (a->tv_sec == b->tv_sec)
+        {
+            if (a->tv_nsec < b->tv_nsec)
+            {
+                return -1;
+            }
+
+            if (b->tv_nsec < a->tv_nsec)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+
+        return (a->tv_sec < b->tv_sec) ? -1 : 1;
+    }
+
     void systemInit(System* sys)
     {
         memset(sys, 0, sizeof(*sys));
         memcpy(sys->mem, CHIP8_FONT, sizeof(CHIP8_FONT));
         sys->pc = 0x200;
+        clock_gettime(CLOCK_MONOTONIC, &sys->nextTick);
+        timeAdd(&sys->nextTick, TIMER_UPDATE_NS_FREQ);
     }
 
     void systemLoad(System* sys, const void* program, uint16_t programSize)
@@ -281,19 +320,26 @@ namespace c8e
         fetchOpCode(sys);
         execOpCode(sys);
 
-        if (sys->delayTimer > 0)
-        {
-            --sys->delayTimer;
-        }
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
 
-        if (sys->soundTimer > 0)
+        while (timeCmp(&sys->nextTick, &now) < 0)
         {
-            if (--sys->soundTimer == 0)
+            if (sys->delayTimer > 0)
             {
-                printf("Beep!\n");
+                --sys->delayTimer;
             }
-        }
 
+            if (sys->soundTimer > 0)
+            {
+                if (--sys->soundTimer == 0)
+                {
+                    printf("Beep!\n");
+                }
+            }
+
+            timeAdd(&sys->nextTick, TIMER_UPDATE_NS_FREQ);
+        }
     }
 
 } // namespace c8e
