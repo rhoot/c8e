@@ -1,6 +1,11 @@
+_PHONY: run
+
 OBJECTS := \
 	.build/obj/src/main.o \
 	.build/obj/src/system.o
+
+run: .build/out/c8e
+	.build/out/c8e
 
 .build/out/c8e: $(OBJECTS)
 	mkdir -p .build/out

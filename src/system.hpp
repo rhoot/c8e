@@ -13,42 +13,36 @@ namespace c8e
         uint8_t  delayTimer;
         uint8_t  soundTimer;
 
-        struct
-        {
-            uint16_t I;
-            uint16_t pc;
+        uint16_t stack[16];
+        int8_t   sp;
 
-            union
+        uint16_t I;
+        uint16_t pc;
+
+        union
+        {
+            struct
             {
-                struct
-                {
-                    uint8_t V0;
-                    uint8_t V1;
-                    uint8_t V2;
-                    uint8_t V3;
-                    uint8_t V4;
-                    uint8_t V5;
-                    uint8_t V6;
-                    uint8_t V7;
-                    uint8_t V8;
-                    uint8_t V9;
-                    uint8_t VA;
-                    uint8_t VB;
-                    uint8_t VC;
-                    uint8_t VD;
-                    uint8_t VE;
-                    uint8_t VF;
-                };
-
-                uint8_t V[16];
+                uint8_t V0;
+                uint8_t V1;
+                uint8_t V2;
+                uint8_t V3;
+                uint8_t V4;
+                uint8_t V5;
+                uint8_t V6;
+                uint8_t V7;
+                uint8_t V8;
+                uint8_t V9;
+                uint8_t VA;
+                uint8_t VB;
+                uint8_t VC;
+                uint8_t VD;
+                uint8_t VE;
+                uint8_t VF;
             };
-        } reg;
 
-        struct
-        {
-            uint16_t addr[16];
-            int8_t   sp;
-        } stack;
+            uint8_t V[16];
+        };
 
     }; // struct System
 
