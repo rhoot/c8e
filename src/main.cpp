@@ -1,4 +1,8 @@
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+
+#include <time.h>
 
 #include "system.hpp"
 
@@ -41,5 +45,32 @@ int main(int, char**)
     for(;;)
     {
         c8e::systemCycle(&sys);
+
+        if (sys.drawFlag)
+        {
+            system("clear");
+
+            for (const uint64_t row : sys.fb)
+            {
+                char line[65];
+
+                for (int64_t i = 0; i < 64; ++i)
+                {
+                    const uint64_t mask = uint64_t(1) << (63 - i);
+                    const uint64_t bit = row & mask;
+                    line[i] = bit ? '*' : ' ';
+                }
+
+                line[64] = 0;
+                printf("%s\n", line);
+            }
+
+            sys.drawFlag = false;
+        }
+
+        struct timespec ts;
+        ts.tv_sec = 0;
+        ts.tv_nsec = 1000000000 / 60;
+        nanosleep(&ts, nullptr);
     }
 }

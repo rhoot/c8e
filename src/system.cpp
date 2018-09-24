@@ -42,6 +42,10 @@ namespace c8e
             case 0x0000:
                 switch (sys->op)
                 {
+                    case 0x00E0: // 0x00E0 : Clears the screen.
+                        memset(sys->fb, 0, sizeof(sys->fb));
+                        break;
+
                     case 0x00EE: // 0x00EE : Returns from a subroutine.
                         sys->pc = sys->stack[--(sys->sp)];
                         break;
@@ -151,8 +155,31 @@ namespace c8e
             }
 
             case 0xD000: // 0xDXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels.
-                printf("IMPLEMENT: 0xDXYN\n");
+            {
+                const uint8_t x = sys->V[(sys->op & 0x0F00) >> 8];              // 12
+                const uint8_t y = sys->V[(sys->op & 0x00F0) >> 4];              // 6
+                const uint8_t h = sys->op & 0x000F;                             // 4
+
+                sys->drawFlag = true;
+                sys->VF = 0;
+
+                for (uint8_t n = 0; n < h; ++n)
+                {
+                    const uint64_t pix  = sys->mem[sys->I + n];                  // 0b00000000000011000011
+                    const uint64_t mask = (pix << 56) >> x;                      // 0b11000011000000000000
+                    const uint64_t cur  = sys->fb[y + n];                        // 0b10101010101010101010
+                    const uint64_t res  = (cur & ~mask) | ((cur ^ mask) & mask); // 0b01101001101010101010
+
+                    if (cur & mask)
+                    {
+                        sys->VF = 1;
+                    }
+
+                    sys->fb[y + n] = res;
+                }
+
                 break;
+            }
 
             case 0xE000:
                 switch (sys->op & 0x00FF)
@@ -238,12 +265,9 @@ namespace c8e
 
     void systemInit(System* sys)
     {
-        sys->op = 0;
-        sys->pc = 0x200;
-        sys->I  = 0;
-        sys->sp = 0;
-
+        memset(sys, 0, sizeof(*sys));
         memcpy(sys->mem, CHIP8_FONT, sizeof(CHIP8_FONT));
+        sys->pc = 0x200;
     }
 
     void systemLoad(System* sys, const void* program, uint16_t programSize)

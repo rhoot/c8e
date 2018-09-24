@@ -5,9 +5,11 @@ namespace c8e
 
     struct System
     {
+        bool drawFlag;
+
         uint16_t op;
         uint8_t  mem[4096];
-        uint8_t  fb[256];
+        uint64_t fb[32];
         uint16_t buttons;
 
         uint8_t  delayTimer;
