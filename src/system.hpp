@@ -50,7 +50,7 @@ namespace c8e
     }; // struct System
 
     void systemInit(System* sys);
-    void systemLoad(System* sys, const void* program, uint16_t programSize);
+    void systemProgramMem(System* sys, void** o_buf, uint16_t* o_maxSize);
     void systemCycle(System *sys);
 
 } // namespace c8e

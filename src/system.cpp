@@ -309,10 +309,10 @@ namespace c8e
         timeAdd(&sys->nextTick, TIMER_UPDATE_NS_FREQ);
     }
 
-    void systemLoad(System* sys, const void* program, uint16_t programSize)
+    void systemProgramMem(System* sys, void** o_buf, uint16_t* o_maxSize)
     {
-        assert(sizeof(sys->mem) >= (programSize + 0x200));
-        memcpy(sys->mem + 0x200, program, programSize);
+        *o_buf     = sys->mem + 0x200;
+        *o_maxSize = sizeof(sys->mem) - 0x200;
     }
 
     void systemCycle(System* sys)
