@@ -11,12 +11,12 @@ solution "c8e"
     targetdir "../.build/out"
 
     language "C++"
-
-    platforms { "Native" }
     configurations { "Debug", "Release" }
+    defines {"SFML_STATIC=1"}
 
     includedirs {path.join(SFML_DIR, "include")}
     libdirs {"../.build/lib"}
+    windowstargetplatformversion "10.0.17134.0"
 
     flags {
         "Cpp11",
@@ -28,9 +28,22 @@ solution "c8e"
     }
 
     configuration {"Release"}
-        flags {
-            "OptimizeSpeed",
+        flags {"OptimizeSpeed"}
+
+    configuration {"vs*"}
+        buildoptions {
+            "/wd4530", -- warning C4530: C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
         }
+        defines {
+            "_SCL_SECURE_NO_WARNINGS",
+            "_CRT_SECURE_NO_WARNINGS",
+        }
+
+    configuration {"windows"}
+        platforms {"x64"}
+
+    configuration {"not windows"}
+        platforms {"Native"}
 
     project "c8e"
         kind "ConsoleApp"
@@ -49,6 +62,17 @@ solution "c8e"
                 "-framework IOKit",
                 "-framework OpenGL",
                 "-ObjC",
+            }
+
+        configuration {"vs*"}
+            buildoptions {
+                "/wd4201", -- warning C4201: nonstandard extension used: nameless struct/union
+            }
+
+        configuration {"windows"}
+            links {
+                "opengl32",
+                "winmm",
             }
 
     project "sfml"
@@ -137,4 +161,29 @@ solution "c8e"
                 path.join(SFML_DIR, "src/SFML/Window/OSX/SFWindow.m"),
                 path.join(SFML_DIR, "src/SFML/Window/OSX/VideoModeImpl.cpp"),
                 path.join(SFML_DIR, "src/SFML/Window/OSX/WindowImplCocoa.mm"),
+            }
+
+        configuration {"vs*"}
+            buildoptions {
+                "/wd4267", -- warning C4267: 'argument': conversion from 'size_t' to 'GLint', possible loss of data
+                "/wd4996", -- warning C4996: 'GetVersion': was declared deprecated
+            }
+
+        configuration {"windows"}
+            flags {
+                "Unicode",
+            }
+            files {
+                path.join(SFML_DIR, "src/SFML/System/Win32/ClockImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Win32/MutexImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Win32/SleepImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Win32/ThreadLocalImpl.cpp"),
+
+                path.join(SFML_DIR, "src/SFML/Window/Win32/CursorImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/JoystickImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/SensorImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/VideoModeImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/WglContext.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/WglExtensions.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Win32/WindowImplWin32.cpp"),
             }

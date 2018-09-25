@@ -3,7 +3,7 @@ c8e
 
 [CHIP-8] emulator. Written for kicks and giggles.
 
-Only compiles and runs on macOS.
+Currently builds and runs on macOS and Windows.
 
 
 ```

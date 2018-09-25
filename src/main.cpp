@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <time.h>
+#include "compat/time.hpp"
 
 #include <SFML/Graphics.hpp>
 
@@ -199,7 +199,7 @@ namespace c8e
 
 int main(int argc, char** argv)
 {
-    srand(time(nullptr));
+    srand(unsigned(time(nullptr)));
 
     // Parse arguments.
     c8e::Args args;
