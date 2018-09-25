@@ -143,7 +143,7 @@ namespace c8e
                     {
                         const uint16_t res = sys->V[regX] - sys->V[regY];
                         sys->V[regX] = res;
-                        sys->VF      = (res >> 8 ? 1 : 0);
+                        sys->VF      = (res >> 8 ? 0 : 1);
                         break;
                     }
 
@@ -290,11 +290,11 @@ namespace c8e
                         break;
 
                     case 0x0055: // 0xFX55 : Stores V0 to VX (including VX) in memory starting at address I.
-                        memcpy(sys->mem + sys->I, sys->V, reg);
+                        memcpy(sys->mem + sys->I, sys->V, reg + 1);
                         break;
 
                     case 0x0065: // 0xFX65 : Fills V0 to VX (including VX) with values from memory starting at address I.
-                        memcpy(sys->V, sys->mem + sys->I, reg);
+                        memcpy(sys->V, sys->mem + sys->I, reg + 1);
                         break;
 
                     default:
