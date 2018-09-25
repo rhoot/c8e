@@ -5,11 +5,13 @@ namespace c8e
 
     struct System
     {
+        using Fb = uint64_t[32];
+
         bool drawFlag;
 
         uint16_t op;
         uint8_t  mem[4096];
-        uint64_t fb[32];
+        Fb       fb;
         uint16_t buttons;
 
         uint8_t  delayTimer;

@@ -12,9 +12,6 @@
 namespace c8e
 {
 
-    using Fb = uint64_t[32];
-
-
     struct RenderCtx
     {
         sf::RenderWindow window;
@@ -54,7 +51,7 @@ namespace c8e
     }
 
 
-    static void drawFb(RenderCtx* ctx, const Fb& fb)
+    static void drawFb(RenderCtx* ctx, const System::Fb& fb)
     {
         // Convert from bit-array to RGBA.
         uint32_t pixels[64 * 32];
