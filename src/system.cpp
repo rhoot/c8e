@@ -335,6 +335,7 @@ namespace c8e
                 if (--sys->soundTimer == 0)
                 {
                     putc('\a', stdout);
+                    fflush(stdout);
                 }
             }
 
