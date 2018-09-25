@@ -5,6 +5,29 @@ c8e
 
 Currently builds and runs on macOS and Windows.
 
+Building
+--------
+
+Uses [GENie] for project generation.
+
+### macOS
+
+```bash
+c8e$ genie gmake
+c8e$ make -j -C .build/prj config=release
+c8e$ .build/out/c8e programs/bc_test.c8
+```
+
+### Windows
+
+```bash
+c8e$ genie vs2017
+c8e$ msbuild /p:Configuration=Release /p:Platform=x64 .build/prj/c8e.sln
+c8e$ .build/out/c8e programs/bc_test.c8
+```
+
+Usage
+-----
 
 ```
 c8e: Yet another CHIP-8 emulator.
