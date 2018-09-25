@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2018 Johan Sköld
+-- License: https://opensource.org/licenses/ISC
+--
+
 local SFML_DIR = "../3rdparty/SFML-2.5.0"
 
 solution "c8e"

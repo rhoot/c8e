@@ -1,3 +1,8 @@
+//
+// Copyright (c) 2018 Johan Sköld
+// License: https://opensource.org/licenses/ISC
+//
+
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -121,11 +126,21 @@ namespace c8e
 
     static void showUsage(const char* prg)
     {
-        printf("Usage: %s <c8_path>\n", findBasename(prg));
+        const char* basename = findBasename(prg);
+
+        printf("%s: Yet another CHIP-8 emulator.\n", basename);
         printf("\n");
-        printf("Yet another CHIP-8 emulator.\n");
+        printf("Usage:\n");
         printf("\n");
-        printf("    c8_path:\tPath to the CHIP-8 ROM to run.\n");
+        printf("  %s --help\n", basename);
+        printf("  %s [--log] [--step] <c8_path>\n", basename);
+        printf("\n");
+        printf("Arguments:\n");
+        printf("\n");
+        printf("  --help\tShow this help and exit.\n");
+        printf("  --log \tPrint every instruction executed to stdout.\n");
+        printf("  --step\tOnly cycle the CPU when space is pressed.\n");
+        printf("  c8_path\tPath to the CHIP-8 ROM to run.\n");
         printf("\n");
     }
 

@@ -1,3 +1,8 @@
+//
+// Copyright (c) 2018 Johan Sköld
+// License: https://opensource.org/licenses/ISC
+//
+
 #pragma once
 
 namespace c8e
