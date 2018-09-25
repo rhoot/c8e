@@ -53,8 +53,8 @@ namespace c8e
                         sys->pc = sys->stack[--(sys->sp)];
                         break;
 
-                    default:
-                        goto unknown_op;
+                    default:     // 0x0NNN : Jump to a machine code routine at nnn. (ignored)
+                        break;
                 }
 
                 break;
@@ -84,6 +84,14 @@ namespace c8e
                 break;
             }
 
+            case 0x5000: // 0x5XY0 : Skips the next instruction if VX equals VY.
+            {
+                const uint8_t regX = (sys->op & 0x0F00) >> 8;
+                const uint8_t regY = (sys->op & 0x00F0) >> 4;
+                sys->pc += (sys->V[regX] == sys->V[regY] ? 2 : 0);
+                break;
+            }
+
             case 0x6000: // 0x6XNN : Sets VX to NN.
             {
                 const uint8_t reg = (sys->op & 0x0F00) >> 8;
@@ -101,28 +109,30 @@ namespace c8e
             }
 
             case 0x8000:
+            {
+                const uint8_t regX = (sys->op & 0x0F00) >> 8;
+                const uint8_t regY = (sys->op & 0x00F0) >> 4;
+
                 switch (sys->op & 0x000F)
                 {
                     case 0x0000: // 0x8XY0 : Sets VX to the value of VY.
-                    {
-                        const uint8_t regX = (sys->op & 0x0F00) >> 8;
-                        const uint8_t regY = (sys->op & 0x00F0) >> 4;
                         sys->V[regX] = sys->V[regY];
                         break;
-                    }
+
+                    case 0x0001: // 0x8XY1 : Sets VX to VX or VY. (Bitwise OR operation)
+                        sys->V[regX] |= sys->V[regY];
+                        break;
 
                     case 0x0002: // 0x8XY2 : Sets VX to VX and VY. (Bitwise AND operation)
-                    {
-                        const uint8_t regX = (sys->op & 0x0F00) >> 8;
-                        const uint8_t regY = (sys->op & 0x00F0) >> 4;
                         sys->V[regX] &= sys->V[regY];
                         break;
-                    }
+
+                    case 0x0003: // 0x8XY3 : Sets VX to VX xor VY.
+                        sys->V[regX] ^= sys->V[regY];
+                        break;
 
                     case 0x0004: // 0x8XY4 : Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't.
                     {
-                        const uint8_t regX = (sys->op & 0x0F00) >> 8;
-                        const uint8_t regY = (sys->op & 0x00F0) >> 4;
                         const uint16_t res = sys->V[regX] + sys->V[regY];
                         sys->V[regX] = res;
                         sys->VF      = (res >> 8 ? 1 : 0);
@@ -131,22 +141,51 @@ namespace c8e
 
                     case 0x0005: // 0x8XY5 : VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
                     {
-                        const uint8_t regX = (sys->op & 0x0F00) >> 8;
-                        const uint8_t regY = (sys->op & 0x00F0) >> 4;
                         const uint16_t res = sys->V[regX] - sys->V[regY];
                         sys->V[regX] = res;
                         sys->VF      = (res >> 8 ? 1 : 0);
                         break;
                     }
 
+                    case 0x0006: // 0x8XY6 : Stores the least significant bit of VX in VF and then shifts VX to the right by 1.
+                        sys->VF        = (sys->V[regX] & 1);
+                        sys->V[regX] >>= 1;
+                        break;
+
+                    case 0x0007: // 0x8XY7 : Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there isn't.
+                    {
+                        const uint16_t res = sys->V[regY] - sys->V[regX];
+                        sys->V[regX] = res;
+                        sys->VF      = (res >> 8 ? 0 : 1);
+                        break;
+                    }
+
+                    case 0x000E: // 0x8XYE : Stores the most significant bit of VX in VF and then shifts VX to the left by 1.
+                        sys->VF        = (sys->V[regX] & 0x80) >> 7;
+                        sys->V[regX] <<= 1;
+                        break;
+
                     default:
                         goto unknown_op;
                 }
 
                 break;
+            }
+
+            case 0x9000: // 0x9XY0 : Skips the next instruction if VX doesn't equal VY.
+            {
+                const uint8_t regX = (sys->op & 0x0F00) >> 8;
+                const uint8_t regY = (sys->op & 0x00F0) >> 4;
+                sys->pc += (regX == regY ? 0 : 2);
+                break;
+            }
 
             case 0xA000: // 0xANNN : Sets I to the address NNN.
                 sys->I = sys->op & 0x0FFF;
+                break;
+
+            case 0xB000: // 0xBNNN : Jumps to the address NNN plus V0.
+                sys->pc = (sys->op & 0x0FFF) + sys->V0;
                 break;
 
             case 0xC000: // 0xCXNN : Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN.
@@ -186,12 +225,22 @@ namespace c8e
             }
 
             case 0xE000:
+            {
+                const uint8_t reg = (sys->op & 0x0F00) >> 8;
+
                 switch (sys->op & 0x00FF)
                 {
+                    case 0x009E: // 0xEX9E : Skips the next instruction if the key stored in VX is pressed.
+                    {
+                        const uint8_t  key  = sys->V[reg];
+                        const uint16_t mask = 1 << key;
+                        sys->pc += (sys->buttons & mask ? 2 : 0);
+                        break;
+                    }
+
                     case 0x00A1: // 0xEXA1 : Skips the next instruction if the key stored in VX isn't pressed.
                     {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
-                        const uint8_t key = sys->V[reg];
+                        const uint8_t  key  = sys->V[reg];
                         const uint16_t mask = 1 << key;
                         sys->pc += (sys->buttons & mask ? 0 : 2);
                         break;
@@ -202,59 +251,58 @@ namespace c8e
                 }
 
                 break;
+            }
 
             case 0xF000:
+            {
+                const uint8_t reg = (sys->op & 0x0F00) >> 8;
+
                 switch (sys->op & 0x00FF)
                 {
                     case 0x0007: // 0xFX07 : Sets VX to the value of the delay timer.
-                    {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
                         sys->V[reg] = sys->delayTimer;
                         break;
-                    }
+
+                    case 0x000A: // 0xFX0A : A key press is awaited, and then stored in VX. (Blocking Operation.)
+                        fprintf(stderr, "FIXME: Implement 0xFX0A\n");
+                        break;
 
                     case 0x0015: // 0xFX15 : Sets the delay timer to VX.
-                    {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
                         sys->delayTimer = sys->V[reg];
                         break;
-                    }
 
                     case 0x0018: // 0xFX18 : Sets the sound timer to VX.
-                    {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
                         sys->soundTimer = sys->V[reg];
                         break;
-                    }
+
+                    case 0x001E: // 0xFX1E : Adds VX to I.
+                        sys->I += sys->V[reg];
+                        break;
 
                     case 0x0029: // 0xFX29 : Sets I to the location of the sprite for the character in VX.
-                    {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
                         sys->I = sys->V[reg] * 5;
                         break;
-                    }
 
                     case 0x0033: // 0xFX33 : Stores the binary-coded decimal representation of VX, with the most significant of three digits at the address in I, the middle digit at I plus 1, and the least significant digit at I plus 2.
-                    {
-                        const uint8_t reg = (sys->op & 0x0F00) >> 8;
                         sys->mem[sys->I + 0] = sys->V[reg] / 100;
                         sys->mem[sys->I + 1] = (sys->V[reg] / 10) % 10;
                         sys->mem[sys->I + 2] = sys->V[reg] % 10;
                         break;
-                    }
+
+                    case 0x0055: // 0xFX55 : Stores V0 to VX (including VX) in memory starting at address I.
+                        memcpy(sys->mem + sys->I, sys->V, reg);
+                        break;
 
                     case 0x0065: // 0xFX65 : Fills V0 to VX (including VX) with values from memory starting at address I.
-                    {
-                        const uint8_t bytes = (sys->op & 0x0F00) >> 8;
-                        memcpy(sys->V, sys->mem + sys->I, bytes);
+                        memcpy(sys->V, sys->mem + sys->I, reg);
                         break;
-                    }
 
                     default:
                         goto unknown_op;
                 }
 
                 break;
+            }
 
             default:
                 goto unknown_op;
