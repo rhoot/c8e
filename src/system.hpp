@@ -7,8 +7,6 @@ namespace c8e
     {
         using Fb = uint64_t[32];
 
-        bool drawFlag;
-
         uint16_t op;
         uint8_t  mem[4096];
         Fb       fb;
@@ -51,8 +49,17 @@ namespace c8e
 
     }; // struct System
 
+
+    struct CycleOpts
+    {
+        bool fbUpdated{false};
+    };
+
+    using DisasmStr = char[16];
+
     void systemInit(System* sys);
     void systemProgramMem(System* sys, void** o_buf, uint16_t* o_maxSize);
-    void systemCycle(System *sys);
+    void systemCycle(System *sys, CycleOpts* o_opts);
+    void systemDisasm(uint16_t opcode, DisasmStr& o_str);
 
 } // namespace c8e

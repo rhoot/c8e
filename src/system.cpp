@@ -37,7 +37,7 @@ namespace c8e
         sys->op = (hi << 8) | lo;
     }
 
-    static void execOpCode(System* sys)
+    static void execOpCode(System* sys, CycleOpts* o_opts)
     {
         switch (sys->op & 0xF000)
         {
@@ -46,6 +46,7 @@ namespace c8e
                 {
                     case 0x00E0: // 0x00E0 : Clears the screen.
                         memset(sys->fb, 0, sizeof(sys->fb));
+                        o_opts->fbUpdated = true;
                         break;
 
                     case 0x00EE: // 0x00EE : Returns from a subroutine.
@@ -162,7 +163,6 @@ namespace c8e
                 const uint8_t y = sys->V[(sys->op & 0x00F0) >> 4];              // 6
                 const uint8_t h = sys->op & 0x000F;                             // 4
 
-                sys->drawFlag = true;
                 sys->VF = 0;
 
                 for (uint8_t n = 0; n < h; ++n)
@@ -179,6 +179,8 @@ namespace c8e
 
                     sys->fb[y + n] = res;
                 }
+
+                o_opts->fbUpdated = true;
 
                 break;
             }
@@ -315,10 +317,10 @@ namespace c8e
         *o_maxSize = sizeof(sys->mem) - 0x200;
     }
 
-    void systemCycle(System* sys)
+    void systemCycle(System* sys, CycleOpts* o_opts)
     {
         fetchOpCode(sys);
-        execOpCode(sys);
+        execOpCode(sys, o_opts);
 
         struct timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
@@ -340,6 +342,239 @@ namespace c8e
             }
 
             timeAdd(&sys->nextTick, TIMER_UPDATE_NS_FREQ);
+        }
+    }
+
+    void systemDisasm(uint16_t opcode, DisasmStr& o_str)
+    {
+        o_str[0] = 0;
+
+        switch (opcode & 0xF000)
+        {
+            case 0x0000:
+                switch (opcode & 0x00FF)
+                {
+                    case 0x00E0:
+                        strcpy(o_str, "CLS");
+                        break;
+
+                    case 0x00EE:
+                        strcpy(o_str, "RET");
+                        break;
+
+                    default:
+                    {
+                        const uint16_t addr = (opcode & 0x0FFF);
+                        snprintf(o_str, sizeof(o_str), "SYS  0x%03X", addr);
+                        break;
+                    }
+                }
+
+                break;
+
+            case 0x1000:
+            {
+                const uint16_t addr = (opcode & 0x0FFF);
+                snprintf(o_str, sizeof(o_str), "JP   0x%03X", addr);
+                break;
+            }
+
+            case 0x2000:
+            {
+                const uint16_t addr = (opcode & 0x0FFF);
+                snprintf(o_str, sizeof(o_str), "CALL 0x%03X", addr);
+                break;
+            }
+
+            case 0x3000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+                const uint8_t val = (opcode & 0x00FF);
+                snprintf(o_str, sizeof(o_str), "SE   V%X, 0x%02X", reg, val);
+                break;
+            }
+
+            case 0x4000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+                const uint8_t val = (opcode & 0x00FF);
+                snprintf(o_str, sizeof(o_str), "SNE  V%X, 0x%02X", reg, val);
+                break;
+            }
+
+            case 0x5000:
+            {
+                const uint8_t regX = (opcode & 0x0F00) >> 8;
+                const uint8_t regY = (opcode & 0x00F0) >> 4;
+                snprintf(o_str, sizeof(o_str), "SE   V%X, V%X", regX, regY);
+                break;
+            }
+
+            case 0x6000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+                const uint8_t val = (opcode & 0x00FF);
+                snprintf(o_str, sizeof(o_str), "LD   V%X, 0x%02X", reg, val);
+                break;
+            }
+
+            case 0x7000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+                const uint8_t val = (opcode & 0x00FF);
+                snprintf(o_str, sizeof(o_str), "ADD  V%X, 0x%02X", reg, val);
+                break;
+            }
+
+            case 0x8000:
+            {
+                const uint8_t regX = (opcode & 0x0F00) >> 8;
+                const uint8_t regY = (opcode & 0x00F0) >> 4;
+
+                switch (opcode & 0x000F)
+                {
+                    case 0x0000:
+                        snprintf(o_str, sizeof(o_str), "LD   V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0001:
+                        snprintf(o_str, sizeof(o_str), "OR   V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0002:
+                        snprintf(o_str, sizeof(o_str), "AND  V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0003:
+                        snprintf(o_str, sizeof(o_str), "XOR  V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0004:
+                        snprintf(o_str, sizeof(o_str), "ADD  V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0005:
+                        snprintf(o_str, sizeof(o_str), "SUB  V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0006:
+                        snprintf(o_str, sizeof(o_str), "SHR  V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x0007:
+                        snprintf(o_str, sizeof(o_str), "SUBN V%X, V%X", regX, regY);
+                        break;
+
+                    case 0x000E:
+                        snprintf(o_str, sizeof(o_str), "SHL  V%X, V%X", regX, regY);
+                        break;
+                }
+
+                break;
+            }
+
+            case 0x9000:
+            {
+                const uint8_t regX = (opcode & 0x0F00) >> 8;
+                const uint8_t regY = (opcode & 0x00F0) >> 4;
+                snprintf(o_str, sizeof(o_str), "SNE  V%X, V%X", regX, regY);
+                break;
+            }
+
+            case 0xA000:
+            {
+                const uint16_t addr = (opcode & 0x0FFF);
+                snprintf(o_str, sizeof(o_str), "LD   I, 0x%03X", addr);
+                break;
+            }
+
+            case 0xB000:
+            {
+                const uint16_t addr = (opcode & 0x0FFF);
+                snprintf(o_str, sizeof(o_str), "JP   V0, 0x%03X", addr);
+                break;
+            }
+
+            case 0xC000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+                const uint8_t val = (opcode & 0x00FF);
+                snprintf(o_str, sizeof(o_str), "RND  V%X, 0x%02X", reg, val);
+                break;
+            }
+
+            case 0xD000:
+            {
+                const uint8_t regX = (opcode & 0x0F00) >> 8;
+                const uint8_t regY = (opcode & 0x00F0) >> 4;
+                const uint8_t n    = (opcode & 0x000F);
+                snprintf(o_str, sizeof(o_str), "DRW  V%X, V%X, %d", regX, regY, n);
+                break;
+            }
+
+            case 0xE000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+
+                switch (opcode & 0x00FF)
+                {
+                    case 0x009E:
+                        snprintf(o_str, sizeof(o_str), "SKP  V%X", reg);
+                        break;
+
+                    case 0x00A1:
+                        snprintf(o_str, sizeof(o_str), "SKNP V%X", reg);
+                        break;
+                }
+
+                break;
+            }
+
+            case 0xF000:
+            {
+                const uint8_t reg = (opcode & 0x0F00) >> 8;
+
+                switch (opcode & 0x00FF)
+                {
+                    case 0x0007:
+                        snprintf(o_str, sizeof(o_str), "LD   V%X, DT", reg);
+                        break;
+
+                    case 0x000A:
+                        snprintf(o_str, sizeof(o_str), "LD   V%X, K", reg);
+                        break;
+
+                    case 0x0015:
+                        snprintf(o_str, sizeof(o_str), "LD   DT, V%X", reg);
+                        break;
+
+                    case 0x0018:
+                        snprintf(o_str, sizeof(o_str), "LD   ST, V%X", reg);
+                        break;
+
+                    case 0x001E:
+                        snprintf(o_str, sizeof(o_str), "ADD  I, V%X", reg);
+                        break;
+
+                    case 0x0029:
+                        snprintf(o_str, sizeof(o_str), "LD   F, V%X", reg);
+                        break;
+
+                    case 0x0033:
+                        snprintf(o_str, sizeof(o_str), "LD   B, V%X", reg);
+                        break;
+
+                    case 0x0055:
+                        snprintf(o_str, sizeof(o_str), "LD   [I], V%X", reg);
+                        break;
+
+                    case 0x0065:
+                        snprintf(o_str, sizeof(o_str), "LD   V%X, [I]", reg);
+                        break;
+                }
+
+                break;
+            }
         }
     }
 

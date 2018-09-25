@@ -20,6 +20,21 @@ namespace c8e
     };
 
 
+    struct Args
+    {
+        bool step{false};
+        bool help{false};
+        bool log{false};
+        const char* path{nullptr};
+    };
+
+
+    struct EventOpts
+    {
+        bool step{false};
+    };
+
+
     static void renderCtxInit(RenderCtx* ctx)
     {
         ctx->window.create(sf::VideoMode{640, 320}, "c8e", sf::Style::Titlebar | sf::Style::Close);
@@ -29,7 +44,7 @@ namespace c8e
     }
 
 
-    static bool processEvents(sf::Window* window)
+    static bool processEvents(sf::Window* window, EventOpts* opts)
     {
         bool run = window->isOpen();
 
@@ -39,10 +54,22 @@ namespace c8e
 
             while (window->pollEvent(event))
             {
-                if (event.type == sf::Event::Closed)
+                switch (event.type)
                 {
-                    window->close();
-                    run = false;
+                    case sf::Event::Closed:
+                        window->close();
+                        run = false;
+                        break;
+
+                    case sf::Event::KeyPressed:
+                        if (event.key.code == sf::Keyboard::Key::Space)
+                        {
+                            opts->step = true;
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
             }
         }
@@ -124,18 +151,52 @@ namespace c8e
         return success;
     }
 
+    static void parseArgs(Args* args, int32_t argc, char** argv)
+    {
+        for (int32_t i = 1; i < argc; ++i)
+        {
+            if (strcmp(argv[i], "--help") == 0)
+            {
+                args->help = true;
+                continue;
+            }
+
+            if (strcmp(argv[i], "--step") == 0)
+            {
+                args->step = true;
+                continue;
+            }
+
+            if (strcmp(argv[i], "--log") == 0)
+            {
+                args->log = true;
+                continue;
+            }
+
+            if (!args->path)
+            {
+                args->path = argv[i];
+            }
+        }
+    }
+
 } // namespace c8e
 
 int main(int argc, char** argv)
 {
     srand(time(nullptr));
 
-    if (argc == 1)
+    // Parse arguments.
+    c8e::Args args;
+    c8e::parseArgs(&args, argc, argv);
+
+    if (args.help || !args.path)
     {
         c8e::showUsage(argv[0]);
-        return 1;
+        return args.help ? 0 : 1;
     }
 
+    // Init the system, and load the program.
     void* programBuf;
     uint16_t programMaxSize;
 
@@ -149,24 +210,43 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    // Init rendering.
     c8e::RenderCtx render;
     c8e::renderCtxInit(&render);
 
-    while (c8e::processEvents(&render.window))
+    // Pump events.
+    c8e::EventOpts opts;
+    while (c8e::processEvents(&render.window, &opts))
     {
-        c8e::systemCycle(&sys);
-
-        if (sys.drawFlag)
+        // Only step the CPU if manual stepping is turned off, or if the step
+        // button was pressed.
+        if (!args.step || opts.step)
         {
-            c8e::drawFb(&render, sys.fb);
-            sys.drawFlag = false;
+            c8e::CycleOpts cycle;
+            c8e::systemCycle(&sys, &cycle);
+
+            if (cycle.fbUpdated)
+            {
+                c8e::drawFb(&render, sys.fb);
+            }
+
+            if (args.log)
+            {
+                char dasm[16];
+                c8e::systemDisasm(sys.op, dasm);
+                printf("%s\n", dasm);
+            }
         }
 
+        // Rate limit.
         constexpr int32_t CYCLE_HZ = 540;
 
         struct timespec ts;
         ts.tv_sec = 0;
         ts.tv_nsec = 1000000000 / CYCLE_HZ;
         nanosleep(&ts, nullptr);
+
+        // Reset event options.
+        opts = c8e::EventOpts{};
     }
 }
