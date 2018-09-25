@@ -1,5 +1,8 @@
+local SFML_DIR = "../3rdparty/SFML-2.5.0"
+
 solution "c8e"
-    location "../.build/prj"
+    location  "../.build/prj"
+    objdir    "../.build/obj"
     targetdir "../.build/out"
 
     language "C++"
@@ -7,10 +10,11 @@ solution "c8e"
     platforms { "Native" }
     configurations { "Debug", "Release" }
 
+    includedirs {path.join(SFML_DIR, "include")}
+    libdirs {"../.build/lib"}
+
     flags {
         "Cpp11",
-        "ExtraWarnings",
-        "FatalWarnings",
         "NoExceptions",
         "NoPCH",
         "NoRTTI",
@@ -25,7 +29,107 @@ solution "c8e"
 
     project "c8e"
         kind "ConsoleApp"
+        files {"../src/**"}
+        links {"sfml"}
+
+        flags {
+            "ExtraWarnings",
+            "FatalWarnings",
+        }
+
+        configuration {"macosx"}
+            linkoptions {
+                "-framework Carbon",
+                "-framework Cocoa",
+                "-framework IOKit",
+                "-framework OpenGL",
+                "-ObjC",
+            }
+
+    project "sfml"
+        kind "StaticLib"
+        targetdir "../.build/lib"
+        includedirs {path.join(SFML_DIR, "src")}
+
+        includedirs {
+            path.join(SFML_DIR, "extlibs/headers/stb_image"),
+        }
 
         files {
-            "../src/**",
+            path.join(SFML_DIR, "src/SFML/Graphics/BlendMode.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Color.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/GLCheck.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/GLExtensions.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/GLLoader.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Glsl.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Image.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/ImageLoader.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/RenderStates.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/RenderTarget.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/RenderTextureImpl.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/RenderTextureImplFBO.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/RenderWindow.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Shader.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Sprite.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Texture.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/TextureSaver.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Transform.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Transformable.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/Vertex.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/VertexBuffer.cpp"),
+            path.join(SFML_DIR, "src/SFML/Graphics/View.cpp"),
+
+            path.join(SFML_DIR, "src/SFML/System/Clock.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/Err.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/Lock.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/Mutex.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/Sleep.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/String.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/ThreadLocal.cpp"),
+            path.join(SFML_DIR, "src/SFML/System/Time.cpp"),
+
+            path.join(SFML_DIR, "src/SFML/Window/Context.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/Cursor.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/GlContext.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/GlResource.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/Joystick.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/JoystickManager.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/SensorManager.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/VideoMode.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/Window.cpp"),
+            path.join(SFML_DIR, "src/SFML/Window/WindowImpl.cpp"),
         }
+
+        configuration {"macosx"}
+            buildoptions {
+                "-Wno-deprecated-declarations",
+            }
+
+            files {
+                path.join(SFML_DIR, "src/SFML/System/Unix/ClockImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/MutexImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/SleepImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/ThreadLocalImpl.cpp"),
+
+                path.join(SFML_DIR, "src/SFML/Window/OSX/AutoreleasePoolWrapper.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/cg_sf_conversion.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/cpp_objc_conversion.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/CursorImpl.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/HIDInputManager.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/HIDJoystickManager.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/JoystickImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SensorImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFApplication.m"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFApplicationDelegate.m"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFContext.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFKeyboardModifiersHelper.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFOpenGLView.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFOpenGLView+keyboard.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFOpenGLView+mouse.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFSilentResponder.m"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFViewController.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFWindowController.mm"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/SFWindow.m"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/VideoModeImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/OSX/WindowImplCocoa.mm"),
+            }

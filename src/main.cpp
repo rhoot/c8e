@@ -4,6 +4,8 @@
 
 #include <time.h>
 
+#include <SFML/Graphics.hpp>
+
 #include "system.hpp"
 
 
@@ -36,37 +38,86 @@ static const uint8_t PONG2_C8[294] = {
 };
 
 
-int main(int, char**)
+using Fb = uint64_t[32];
+
+
+static bool processEvents(sf::Window* window)
+{
+    bool run = window->isOpen();
+
+    if (run)
+    {
+        sf::Event event;
+
+        while (window->pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
+                window->close();
+                run = false;
+            }
+        }
+    }
+
+    return run;
+}
+
+
+static void drawFb(sf::RenderWindow* window, const Fb& fb)
+{
+    // Convert from bit-array to RGBA.
+    uint32_t pixels[64 * 32];
+
+#define PX(x,y) (pixels[y * 64 + x])
+
+    for (int32_t y = 0; y < 32; ++y)
+    {
+        const uint64_t row = fb[y];
+
+        for (int64_t x = 0; x < 64; ++x)
+        {
+            const uint64_t mask  = uint64_t(1) << (63 - x);
+            const uint64_t bit   = row & mask;
+            const uint32_t color = bit ? UINT32_MAX : 0;
+            PX(x, y) = color;
+        }
+    }
+
+#undef PX
+
+    // Create the texture
+    sf::Texture tex;
+    tex.create(64, 32);
+    tex.update((const sf::Uint8*)pixels);
+
+    // Create the sprite.
+    sf::Sprite sprite{tex};
+    sprite.setScale(10.0f, 10.0f);
+
+    // Draw the texture.
+    window->clear(sf::Color::Black);
+    window->draw(sprite);
+    window->display();
+}
+
+
+int main()
 {
     srand(time(nullptr));
+
+    sf::RenderWindow window{sf::VideoMode{640, 320}, "c8e", sf::Style::Titlebar | sf::Style::Close};
 
     c8e::System sys;
     c8e::systemInit(&sys);
     c8e::systemLoad(&sys, PONG2_C8, sizeof(PONG2_C8));
 
-    for(;;)
+    while (processEvents(&window))
     {
         c8e::systemCycle(&sys);
 
         if (sys.drawFlag)
         {
-            system("clear");
-
-            for (const uint64_t row : sys.fb)
-            {
-                char line[65];
-
-                for (int64_t i = 0; i < 64; ++i)
-                {
-                    const uint64_t mask = uint64_t(1) << (63 - i);
-                    const uint64_t bit = row & mask;
-                    line[i] = bit ? '*' : ' ';
-                }
-
-                line[64] = 0;
-                printf("%s\n", line);
-            }
-
+            drawFb(&window, sys.fb);
             sys.drawFlag = false;
         }
 
