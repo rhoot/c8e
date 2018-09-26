@@ -240,7 +240,7 @@ namespace c8e
                     {
                         const uint8_t  key  = sys->V[reg];
                         const uint16_t mask = 1 << key;
-                        sys->pc += (sys->buttons & mask ? 2 : 0);
+                        sys->pc += (sys->keys & mask ? 2 : 0);
                         break;
                     }
 
@@ -248,7 +248,7 @@ namespace c8e
                     {
                         const uint8_t  key  = sys->V[reg];
                         const uint16_t mask = 1 << key;
-                        sys->pc += (sys->buttons & mask ? 0 : 2);
+                        sys->pc += (sys->keys & mask ? 0 : 2);
                         break;
                     }
 

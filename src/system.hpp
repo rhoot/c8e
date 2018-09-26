@@ -12,10 +12,30 @@ namespace c8e
     {
         using Fb = uint64_t[32];
 
+        enum Keys : uint16_t
+        {
+            KEY_0 = (1 <<  0),
+            KEY_1 = (1 <<  1),
+            KEY_2 = (1 <<  2),
+            KEY_3 = (1 <<  3),
+            KEY_4 = (1 <<  4),
+            KEY_5 = (1 <<  5),
+            KEY_6 = (1 <<  6),
+            KEY_7 = (1 <<  7),
+            KEY_8 = (1 <<  8),
+            KEY_9 = (1 <<  9),
+            KEY_A = (1 << 10),
+            KEY_B = (1 << 11),
+            KEY_C = (1 << 12),
+            KEY_D = (1 << 13),
+            KEY_E = (1 << 14),
+            KEY_F = (1 << 15),
+        };
+
         uint16_t op;
         uint8_t  mem[4096];
         Fb       fb;
-        uint16_t buttons;
+        uint16_t keys;
 
         uint8_t  delayTimer;
         uint8_t  soundTimer;

@@ -27,16 +27,17 @@ namespace c8e
 
     struct Args
     {
-        bool step{false};
-        bool help{false};
-        bool log{false};
+        bool        step{false};
+        bool        help{false};
+        bool        log{false};
         const char* path{nullptr};
     };
 
 
     struct EventOpts
     {
-        bool step{false};
+        bool     step{false};
+        uint16_t keys{0};
     };
 
 
@@ -53,6 +54,8 @@ namespace c8e
     {
         bool run = window->isOpen();
 
+        opts->step = false;
+
         if (run)
         {
             sf::Event event;
@@ -67,10 +70,55 @@ namespace c8e
                         break;
 
                     case sf::Event::KeyPressed:
-                        if (event.key.code == sf::Keyboard::Key::Space)
+                        switch (event.key.code)
                         {
-                            opts->step = true;
+                            case sf::Keyboard::Key::Space: opts->step = true; break;
+
+                            case sf::Keyboard::Key::Num1:  opts->keys |= System::KEY_1; break;
+                            case sf::Keyboard::Key::Num2:  opts->keys |= System::KEY_2; break;
+                            case sf::Keyboard::Key::Num3:  opts->keys |= System::KEY_3; break;
+                            case sf::Keyboard::Key::Num4:  opts->keys |= System::KEY_C; break;
+                            case sf::Keyboard::Key::Q:     opts->keys |= System::KEY_4; break;
+                            case sf::Keyboard::Key::W:     opts->keys |= System::KEY_5; break;
+                            case sf::Keyboard::Key::E:     opts->keys |= System::KEY_6; break;
+                            case sf::Keyboard::Key::R:     opts->keys |= System::KEY_D; break;
+                            case sf::Keyboard::Key::A:     opts->keys |= System::KEY_7; break;
+                            case sf::Keyboard::Key::S:     opts->keys |= System::KEY_8; break;
+                            case sf::Keyboard::Key::D:     opts->keys |= System::KEY_9; break;
+                            case sf::Keyboard::Key::F:     opts->keys |= System::KEY_E; break;
+                            case sf::Keyboard::Key::Z:     opts->keys |= System::KEY_A; break;
+                            case sf::Keyboard::Key::X:     opts->keys |= System::KEY_0; break;
+                            case sf::Keyboard::Key::C:     opts->keys |= System::KEY_B; break;
+                            case sf::Keyboard::Key::V:     opts->keys |= System::KEY_F; break;
+
+                            default: break;
                         }
+
+                        break;
+
+                    case sf::Event::KeyReleased:
+                        switch (event.key.code)
+                        {
+                            case sf::Keyboard::Key::Num1:  opts->keys &= ~System::KEY_1; break;
+                            case sf::Keyboard::Key::Num2:  opts->keys &= ~System::KEY_2; break;
+                            case sf::Keyboard::Key::Num3:  opts->keys &= ~System::KEY_3; break;
+                            case sf::Keyboard::Key::Num4:  opts->keys &= ~System::KEY_C; break;
+                            case sf::Keyboard::Key::Q:     opts->keys &= ~System::KEY_4; break;
+                            case sf::Keyboard::Key::W:     opts->keys &= ~System::KEY_5; break;
+                            case sf::Keyboard::Key::E:     opts->keys &= ~System::KEY_6; break;
+                            case sf::Keyboard::Key::R:     opts->keys &= ~System::KEY_D; break;
+                            case sf::Keyboard::Key::A:     opts->keys &= ~System::KEY_7; break;
+                            case sf::Keyboard::Key::S:     opts->keys &= ~System::KEY_8; break;
+                            case sf::Keyboard::Key::D:     opts->keys &= ~System::KEY_9; break;
+                            case sf::Keyboard::Key::F:     opts->keys &= ~System::KEY_E; break;
+                            case sf::Keyboard::Key::Z:     opts->keys &= ~System::KEY_A; break;
+                            case sf::Keyboard::Key::X:     opts->keys &= ~System::KEY_0; break;
+                            case sf::Keyboard::Key::C:     opts->keys &= ~System::KEY_B; break;
+                            case sf::Keyboard::Key::V:     opts->keys &= ~System::KEY_F; break;
+
+                            default: break;
+                        };
+
                         break;
 
                     default:
@@ -237,6 +285,7 @@ int main(int argc, char** argv)
         // button was pressed.
         if (!args.step || opts.step)
         {
+            sys.keys = opts.keys;
             c8e::CycleOpts cycle;
             c8e::systemCycle(&sys, &cycle);
 
@@ -260,8 +309,5 @@ int main(int argc, char** argv)
         ts.tv_sec = 0;
         ts.tv_nsec = 1000000000 / CYCLE_HZ;
         nanosleep(&ts, nullptr);
-
-        // Reset event options.
-        opts = c8e::EventOpts{};
     }
 }
