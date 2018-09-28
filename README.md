@@ -3,14 +3,14 @@ c8e
 
 [CHIP-8] emulator. Written for kicks and giggles.
 
-Currently builds and runs on macOS and Windows.
+Builds and runs on Linux, macOS, and Windows.
 
 Building
 --------
 
 Uses [GENie] for project generation.
 
-### macOS
+### Linux / macOS
 
 ```bash
 c8e$ genie gmake

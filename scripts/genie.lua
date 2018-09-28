@@ -75,6 +75,15 @@ solution "c8e"
                 "winmm",
             }
 
+        configuration {"linux"}
+            links {
+                "GL",
+                "X11",
+                "Xrandr",
+                "pthread",
+                "udev",
+            }
+
     project "sfml"
         kind "StaticLib"
         targetdir "../.build/lib"
@@ -186,4 +195,22 @@ solution "c8e"
                 path.join(SFML_DIR, "src/SFML/Window/Win32/WglContext.cpp"),
                 path.join(SFML_DIR, "src/SFML/Window/Win32/WglExtensions.cpp"),
                 path.join(SFML_DIR, "src/SFML/Window/Win32/WindowImplWin32.cpp"),
+            }
+
+        configuration {"linux"}
+            files {
+                path.join(SFML_DIR, "src/SFML/System/Unix/ClockImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/MutexImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/SleepImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/System/Unix/ThreadLocalImpl.cpp"),
+
+                path.join(SFML_DIR, "src/SFML/Window/Unix/CursorImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/Display.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/GlxContext.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/GlxExtensions.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/JoystickImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/SensorImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/VideoModeImpl.cpp"),
+                path.join(SFML_DIR, "src/SFML/Window/Unix/WindowImplX11.cpp"),
+
             }
