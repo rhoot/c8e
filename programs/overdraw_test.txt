@@ -1,0 +1,15 @@
+CHIP-8 overdraw test
+====================
+
+This program draws an 8x8 pixel square at 60x28, meaning it overflows 4 pixels
+in each direction. The correct behavior is to wrap to the other side. So the
+correct behavior when running this program is that you see a 4x4 pixel square
+in each of the four corners of the screen.
+
+If that is not the case, your emulator is not correctly wrapping pixels when
+drawing.
+
+
+Author: Johan Sköld (https://github.com/rhoot)
+License: CC0 (https://creativecommons.org/publicdomain/zero/1.0/)
+

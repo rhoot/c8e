@@ -36,6 +36,26 @@ namespace c8e
         0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
 
+    template<class T, size_t N>
+    static constexpr size_t arrSize(T(&)[N])
+    {
+        return N;
+    }
+
+    static void drawHorizLine(System* sys, uint8_t x, uint8_t y, uint8_t w, uint8_t px)
+    {
+        const uint64_t mask = (uint64_t(px) << (64 - w)) >> x;
+        const uint64_t cur  = sys->fb[y];
+        const uint64_t res  = (cur & ~mask) | ((cur ^ mask) & mask);
+
+        if (cur & mask)
+        {
+            sys->VF = 1;
+        }
+
+        sys->fb[y] = res;
+    }
+
     static void fetchOpCode(System* sys)
     {
         const uint16_t hi = sys->mem[sys->pc++];
@@ -204,25 +224,41 @@ namespace c8e
 
             case 0xD000: // 0xDXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels.
             {
-                const uint8_t x = sys->V[(sys->op & 0x0F00) >> 8];              // 12
-                const uint8_t y = sys->V[(sys->op & 0x00F0) >> 4];              // 6
-                const uint8_t h = sys->op & 0x000F;                             // 4
+                const uint8_t x = sys->V[(sys->op & 0x0F00) >> 8];
+                const uint8_t y = sys->V[(sys->op & 0x00F0) >> 4];
+                const uint8_t h = sys->op & 0x000F;
 
                 sys->VF = 0;
 
-                for (uint8_t n = 0; n < h; ++n)
+                if (x < 56)
                 {
-                    const uint64_t pix  = sys->mem[sys->I + n];                  // 0b00000000000011000011
-                    const uint64_t mask = (pix << 56) >> x;                      // 0b11000011000000000000
-                    const uint64_t cur  = sys->fb[y + n];                        // 0b10101010101010101010
-                    const uint64_t res  = (cur & ~mask) | ((cur ^ mask) & mask); // 0b01101001101010101010
+                    // No horizontal overdraw.
 
-                    if (cur & mask)
+                    for (uint8_t n = 0; n < h; ++n)
                     {
-                        sys->VF = 1;
-                    }
+                        const uint8_t row = (y + n) % arrSize(sys->fb);
+                        const uint8_t px  = sys->mem[sys->I + n];
 
-                    sys->fb[y + n] = res;
+                        drawHorizLine(sys, x, row, 8, px);
+                    }
+                }
+                else
+                {
+                    // Horizontal overdraw.
+
+                    const uint8_t w1 = 64 - x;
+                    const uint8_t w2 = 8 - w1;
+
+                    for (uint8_t n = 0; n < h; ++n)
+                    {
+                        const uint8_t row = (y + n) % arrSize(sys->fb);
+                        const uint8_t px  = sys->mem[sys->I + n];
+                        const uint8_t p1  = px >> w2;
+                        const uint8_t p2  = px & ((1 << w2) - 1);
+
+                        drawHorizLine(sys, x, row, w1, p1);
+                        drawHorizLine(sys, 0, row, w2, p2);
+                    }
                 }
 
                 o_opts->fbUpdated = true;
