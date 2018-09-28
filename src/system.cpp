@@ -230,7 +230,7 @@ namespace c8e
 
                 sys->VF = 0;
 
-                if (x < 56)
+                if (x <= 56)
                 {
                     // No horizontal overdraw.
 
